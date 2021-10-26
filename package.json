@@ -9,15 +9,18 @@
   "author": "Dylan Malandain",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^14.14.37",
     "ts-node": "^8.1.1",
     "typescript": "^3.4.5"
   },
   "dependencies": {
     "@akanass/rx-http-request": "^3.1.0",
+    "@types/common-tags": "^1.8.1",
     "@types/fs-extra": "^7.0.0",
     "@types/request": "^2.48.1",
     "@types/terminal-kit": "^1.28.0",
     "chalk": "^2.4.2",
+    "common-tags": "^1.8.0",
     "figlet": "^1.2.4",
     "fs-extra": "^8.0.1",
     "request": "^2.88.0",
