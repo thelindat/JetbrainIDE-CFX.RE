@@ -81,9 +81,17 @@ ${_function}
       case "long":
       case "uint":
       case "int":
+      case "hash":
+      case "player":
+      case "blip":
+      case "cam":
         return "number";
       case "bool":
         return "boolean";
+      case "object":
+        return "table";
+      case "func":
+        return "function";
 
       default:
         return "any";
