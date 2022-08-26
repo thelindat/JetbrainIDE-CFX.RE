@@ -81,10 +81,12 @@ ${_function}
       case "long":
       case "uint":
       case "int":
-      case "hash":
       case "player":
       case "blip":
       case "cam":
+      case "fireid":
+      case "blip":
+      case "pickup":
         return "number";
       case "bool":
         return "boolean";
@@ -92,6 +94,8 @@ ${_function}
         return "table";
       case "func":
         return "function";
+      case "hash":
+        return "number | string"
 
       default:
         return "any";
