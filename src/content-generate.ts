@@ -1,6 +1,6 @@
 import { FilesBuilder } from "./files-builder";
 import { stripIndents } from "common-tags";
-import { NativeDefinition } from "./types";
+import { NativeDefinition, NativeParam } from "./types";
 
 interface TemplateObject {
   desc: string;
@@ -35,14 +35,30 @@ export class ContentGenerate {
   private template = (
     description: string,
     param: string,
-    returnType: string,
+    returnType: string | string[],
     _function: string
   ) => `
 ${description}${param ? `${param}` : ""}${
-    returnType !== "void" ? `\n---@return ${returnType}` : ""
+    returnType !== "void" ? (typeof returnType === "object" ? this.createMultipleReturnTypes(returnType) : `\n---@return ${returnType}`) : ""
   }
 ${_function}
 `;
+
+/**
+ * Convert string array of return types to a single string with luadocs return types
+ * @param types Array of types to convert
+ * @returns string
+ */
+private createMultipleReturnTypes = (types: string[]): string => {
+  let returnTypes: string = "";
+
+  for (let i = 0; i < types.length; i++) {
+    if (types[i] === "void") continue;
+    returnTypes += `\n---@return ${types[i]}`;
+  }
+
+  return returnTypes;
+};
 
   private buildTemplate = (templateObj: TemplateObject) => {
     let baseTemplate = stripIndents`
@@ -59,48 +75,94 @@ ${_function}
     this.filesBuilder = filesBuilder;
   }
 
-  private static ConvertNativeType(nativeType: string) {
-    const discardPtr = (
-      nativeType.charAt(nativeType.length - 1) === "*"
-        ? nativeType.substring(0, nativeType.length - 1)
-        : nativeType
-    ).toLowerCase();
+  private static ConvertNativeType(nativeType: string | string[]): string | string[] {
+    if (typeof nativeType === "object") {
+      let newTypes: string[] = [];
+      for (let i = 0; i < nativeType.length; i++) {
+        const type: string = nativeType[i].toLowerCase();
+        switch (type) {
+          case "vector3":
+          case "string":
+          case "void":
+            newTypes.push(type)
+            break;
 
-    switch (discardPtr) {
-      case "vector3":
-      case "string":
-      case "void":
-        return discardPtr;
+          case "char":
+            newTypes.push("string");
+            break;
+          case "ped":
+          case "vehicle":
+          case "entity":
+          case "float":
+          case "long":
+          case "uint":
+          case "int":
+          case "player":
+          case "blip":
+          case "cam":
+          case "fireid":
+          case "blip":
+          case "pickup":
+            newTypes.push("number");
+            break;
+          case "bool":
+            newTypes.push("boolean");
+            break;
+          case "object":
+            newTypes.push("table");
+            break;
+          case "func":
+            newTypes.push("function");
+            break;
+          case "hash":
+            newTypes.push("number | string");
+            break;
 
-      case "char":
-        return "string";
-      case "ped":
-      case "vehicle":
-      case "entity":
-      case "float":
-      case "long":
-      case "uint":
-      case "int":
-      case "player":
-      case "blip":
-      case "cam":
-      case "fireid":
-      case "blip":
-      case "pickup":
-        return "number";
-      case "bool":
-        return "boolean";
-      case "object":
-        return "table";
-      case "func":
-        return "function";
-      case "hash":
-        return "number | string"
+          default:
+            newTypes.push("any");
+            break;
+        }
+      }
+      return newTypes;
+    } else {
+      nativeType = nativeType.toLowerCase();
 
-      default:
-        return "any";
+      switch (nativeType) {
+        case "vector3":
+        case "string":
+        case "void":
+          return nativeType;
+
+        case "char":
+          return "string";
+        case "ped":
+        case "vehicle":
+        case "entity":
+        case "float":
+        case "long":
+        case "uint":
+        case "int":
+        case "player":
+        case "blip":
+        case "cam":
+        case "fireid":
+        case "blip":
+        case "pickup":
+          return "number";
+        case "bool":
+          return "boolean";
+        case "object":
+          return "table";
+        case "func":
+          return "function";
+        case "hash":
+          return "number | string"
+
+        default:
+          return "any";
+      }
     }
-  }
+  };
 
   /**
    * Replace LUA Method to string for fix generating issue
@@ -149,6 +211,13 @@ ${_function}
         const nativeName: string = this.nativeName(jsonNative, native);
 
         /**
+         * Convert pointers to the return types and remove the pointer symbol
+         */
+        const [newReturnTypes, newParams] = this.convertOutParams(jsonNative.params, jsonNative.results);
+
+        jsonNative.params = newParams;
+
+        /**
          * Returns parameters in different formats
          */
         const nativeParams: {
@@ -158,13 +227,13 @@ ${_function}
         } = this.nativeParams(jsonNative);
 
         const functionTemplate = `function ${nativeName}(${
-          this.nativeParams(jsonNative).params
+          nativeParams.params
         }) end`;
 
         this.generateDocs = this.template(
           this.nativeDescription(jsonNative),
           nativeParams.luaDocs,
-          ContentGenerate.ConvertNativeType(jsonNative.results),
+          ContentGenerate.ConvertNativeType(newReturnTypes),
           functionTemplate
         );
 
@@ -175,6 +244,35 @@ ${_function}
           nativeName
         );
       }
+  };
+
+  /**
+   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char pointers as those apparently are not return types)
+   * @param params Params to convert the pointers from
+   * @param returnType Default return type that the native has
+   * @returns Array<string[], NativeParam[]>
+   */
+  private convertOutParams = (params: NativeParam[], returnType: string): [string[], NativeParam[]] => {
+    let newReturnTypes: string[] = [returnType];
+
+    for (let i = 0; i < params.length; i++) {
+      let type: string = params[i].type.toLowerCase()
+
+      if (!type.includes("*")) continue;
+
+      if (returnType == "void" && newReturnTypes[0] === returnType) newReturnTypes.shift();
+
+      type = type.substring(0, type.length - 1);
+
+      if (type === "char") {
+        params[i].type = type;
+        continue;
+      };
+
+      newReturnTypes.push(type);
+    }
+
+    return [newReturnTypes, params];
   };
 
   /**
@@ -190,8 +288,8 @@ ${_function}
       return (data.name || natives)
         .toLowerCase()
         .replace("0x", "n_0x")
-        .replace(/_([a-z])/g, (sub, bit) => bit.toUpperCase())
-        .replace(/^([a-z])/, (sub, bit) => bit.toUpperCase());
+        .replace(/_([a-z])/g, (_, bit: string) => bit.toUpperCase())
+        .replace(/^([a-z])/, (_, bit: string) => bit.toUpperCase());
   };
 
   /**
@@ -199,7 +297,7 @@ ${_function}
    *
    * @param data Request the result of the query to the API of the FiveM natives
    *
-   * @return JSON<String luaDocs, String params>
+   * @return JSON<String luaDocs, String params, String paramsWithType>
    */
   private nativeParams = (
     data: NativeDefinition
@@ -215,6 +313,8 @@ ${_function}
 
     for (let i = 0; i < data.params.length; i++) {
       const nativeParam = data.params[i];
+
+      if (nativeParam.type.includes("*")) continue;
 
       const convNativeType = ContentGenerate.ConvertNativeType(
         nativeParam.type
