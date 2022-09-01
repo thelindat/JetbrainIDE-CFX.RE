@@ -247,7 +247,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
   };
 
   /**
-   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char pointers as those apparently are not return types)
+   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char or blip pointers as those apparently are not return types)
    * @param params Params to convert the pointers from
    * @param returnType Default return type that the native has
    * @returns Array<string[], NativeParam[]>
@@ -264,7 +264,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
 
       type = type.substring(0, type.length - 1);
 
-      if (type === "char") {
+      if (type === "char" or type === "blip") {
         params[i].type = type;
         continue;
       };
