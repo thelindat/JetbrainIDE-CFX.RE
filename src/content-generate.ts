@@ -322,6 +322,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
       params: string = "",
       paramsWithType: string = "";
 
+    let paramPos = 0;
     for (let i = 0; i < data.params.length; i++) {
       const nativeParam = data.params[i];
 
@@ -333,13 +334,15 @@ private createMultipleReturnTypes = (types: string[]): string => {
 
       luaDocs += `\n---@param ${nativeParam.name} ${convNativeType}`;
 
-      params += (i != 0 ? "," : "") + this.fieldToReplace(nativeParam.name);
+      params += (paramPos != 0 ? "," : "") + this.fieldToReplace(nativeParam.name);
 
       paramsWithType +=
-        (i != 0 ? "," : "") +
+        (paramPos != 0 ? "," : "") +
         nativeParam.type +
         " " +
         this.fieldToReplace(data.params[i].name);
+
+      paramPos++;
     }
 
     return { luaDocs: luaDocs, params: params, paramsWithType: paramsWithType };
