@@ -264,7 +264,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
 
       type = type.substring(0, type.length - 1);
 
-      if (type === "char" or type === "blip") {
+      if (type === "char" || type === "blip") {
         params[i].type = type;
         continue;
       };
