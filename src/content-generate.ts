@@ -93,6 +93,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
           case "ped":
           case "vehicle":
           case "entity":
+          case "object_1":
           case "float":
           case "long":
           case "uint":
@@ -108,7 +109,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
           case "bool":
             newTypes.push("boolean");
             break;
-          case "object":
+          case "object_2":
             newTypes.push("table");
             break;
           case "func":
@@ -138,6 +139,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
         case "ped":
         case "vehicle":
         case "entity":
+        case "object_1":
         case "float":
         case "long":
         case "uint":
@@ -151,7 +153,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
           return "number";
         case "bool":
           return "boolean";
-        case "object":
+        case "object_2":
           return "table";
         case "func":
           return "function";
@@ -247,7 +249,16 @@ private createMultipleReturnTypes = (types: string[]): string => {
   };
 
   /**
-   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char or blip pointers as those apparently are not return types)
+   * Seperate the Object and object types used in different ways
+   * @param type Type of the native parameter
+   * @returns string
+   */
+  private seperateObjectTypes = (type: string): string => {
+    return type === "Object" ? "object_1" : type === "Object*" ? "object_1*" : type === "object" ? "object_2" : type;
+  };
+
+  /**
+   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char or blip pointers (and Object pointers that aren't GetProjectileNeadPed's outProjectile variable) as those apparently are not return types)
    * @param params Params to convert the pointers from
    * @param returnType Default return type that the native has
    * @returns Array<string[], NativeParam[]>
@@ -256,7 +267,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
     let newReturnTypes: string[] = [returnType];
 
     for (let i = 0; i < params.length; i++) {
-      let type: string = params[i].type.toLowerCase()
+      let type: string = this.seperateObjectTypes(params[i].type).toLowerCase();
 
       if (!type.includes("*")) continue;
 
@@ -264,7 +275,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
 
       type = type.substring(0, type.length - 1);
 
-      if (type === "char" || type === "blip") {
+      if (type === "char" || type === "blip" || (type === "object_1" && params[i].name != "outProjectile")) {
         params[i].type = type;
         continue;
       };
