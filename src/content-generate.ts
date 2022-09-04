@@ -44,21 +44,21 @@ ${_function}
 
 `;
 
-/**
- * Convert string array of return types to a single string with luadocs return types
- * @param types Array of types to convert
- * @returns string
- */
-private createMultipleReturnTypes = (types: string[]): string => {
-  let returnTypes: string = "";
+  /**
+   * Convert string array of return types to a single string with luadocs return types
+   * @param types Array of types to convert
+   * @returns string
+   */
+  private createMultipleReturnTypes = (types: string[]): string => {
+    let returnTypes: string = "";
 
-  for (let i = 0; i < types.length; i++) {
-    if (types[i] === "void") continue;
-    returnTypes += `\n---@return ${types[i]}`;
-  }
+    for (let i = 0; i < types.length; i++) {
+      if (types[i] === "void") continue;
+      returnTypes += `\n---@return ${types[i]}`;
+    }
 
-  return returnTypes;
-};
+    return returnTypes;
+  };
 
   private buildTemplate = (templateObj: TemplateObject) => {
     let baseTemplate = stripIndents`
@@ -215,7 +215,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
         /**
          * Convert pointers to the return types and remove the pointer symbol
          */
-        const [newReturnTypes, newParams] = this.convertOutParams(jsonNative.params, jsonNative.results);
+        const [newReturnTypes, newParams] = this.convertOutParams(jsonNative);
 
         jsonNative.params = newParams;
 
@@ -225,7 +225,6 @@ private createMultipleReturnTypes = (types: string[]): string => {
         const nativeParams: {
           luaDocs: string;
           params: string;
-          paramsWithType: string;
         } = this.nativeParams(jsonNative);
 
         const functionTemplate = `function ${nativeName}(${
@@ -249,6 +248,41 @@ private createMultipleReturnTypes = (types: string[]): string => {
   };
 
   /**
+   * Array containing all natives that have pointers that aren't a return type
+   */
+  private nonReturnPointerNatives: string[] = [ // I didn't know what else to name it
+    // Entity*
+    "DELETE_ENTITY",
+    "SET_ENTITY_AS_NO_LONGER_NEEDED",
+    // Ped*
+    "SET_PED_AS_NO_LONGER_NEEDED",
+    "DELETE_PED",
+    "REMOVE_PED_ELEGANTLY",
+    // Vehicle*
+    "SET_VEHICLE_AS_NO_LONGER_NEEDED",
+    "DELETE_MISSION_TRAIN",
+    "DELETE_VEHICLE",
+    "SET_MISSION_TRAIN_AS_NO_LONGER_NEEDED",
+    // Object*
+    "DELETE_OBJECT",
+    "SET_OBJECT_AS_NO_LONGER_NEEDED",
+    // Vector3*
+    "SET_PLAYER_WANTED_CENTRE_POSITION",
+    "_START_SHAPE_TEST_SURROUNDING_COORDS",
+    // Blip*
+    "REMOVE_BLIP"
+  ];
+
+  /**
+   * Check if the native name is in nonReturnPointerNatives
+   * @param name Name of the native
+   * @returns boolean
+   */
+  private isNonReturnPointerNative = (name: string): boolean => {
+    return this.nonReturnPointerNatives.includes(name);
+  }
+
+  /**
    * Seperate the Object and object types used in different ways
    * @param type Type of the native parameter
    * @returns string
@@ -258,13 +292,14 @@ private createMultipleReturnTypes = (types: string[]): string => {
   };
 
   /**
-   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for char or blip pointers (and Object pointers that aren't GetProjectileNeadPed's outProjectile variable) as those apparently are not return types)
-   * @param params Params to convert the pointers from
-   * @param returnType Default return type that the native has
+   * Returns the return types and params of the native with the pointers removed from the params and moved to the return types (except for non return pointer natives, which are defined in nonReturnPointerNatives or natives with the type "char")
+   * @param data Data of the native to convert the params from
    * @returns Array<string[], NativeParam[]>
    */
-  private convertOutParams = (params: NativeParam[], returnType: string): [string[], NativeParam[]] => {
-    let newReturnTypes: string[] = [returnType];
+  private convertOutParams = (data: NativeDefinition): [string[], NativeParam[]] => {
+    const params: NativeParam[] = data.params;
+    const returnType: string = data.results;
+    const newReturnTypes: string[] = [returnType];
 
     for (let i = 0; i < params.length; i++) {
       let type: string = this.seperateObjectTypes(params[i].type).toLowerCase();
@@ -275,7 +310,7 @@ private createMultipleReturnTypes = (types: string[]): string => {
 
       type = type.substring(0, type.length - 1);
 
-      if (type === "char" || type === "blip" || (type === "object_1" && params[i].name != "outProjectile")) {
+      if (this.isNonReturnPointerNative(data.name) || type === "char") {
         params[i].type = type;
         continue;
       };
@@ -312,15 +347,14 @@ private createMultipleReturnTypes = (types: string[]): string => {
    */
   private nativeParams = (
     data: NativeDefinition
-  ): { luaDocs: string; params: string; paramsWithType: string } => {
+  ): { luaDocs: string; params: string } => {
     /**
      * "luaDocs" Allows to save the generation of LUA documentation and return it
      *
      * "params" Allows to save the generation of the native parameters and to return it.
      */
     let luaDocs: string = "",
-      params: string = "",
-      paramsWithType: string = "";
+      params: string = "";
 
     let paramPos = 0;
     for (let i = 0; i < data.params.length; i++) {
@@ -333,19 +367,11 @@ private createMultipleReturnTypes = (types: string[]): string => {
       );
 
       luaDocs += `\n---@param ${nativeParam.name} ${convNativeType}`;
-
-      params += (paramPos != 0 ? "," : "") + this.fieldToReplace(nativeParam.name);
-
-      paramsWithType +=
-        (paramPos != 0 ? "," : "") +
-        nativeParam.type +
-        " " +
-        this.fieldToReplace(data.params[i].name);
-
+      params += (paramPos != 0 ? ", " : "") + this.fieldToReplace(nativeParam.name);
       paramPos++;
     }
 
-    return { luaDocs: luaDocs, params: params, paramsWithType: paramsWithType };
+    return { luaDocs: luaDocs, params: params };
   };
 
   /**
