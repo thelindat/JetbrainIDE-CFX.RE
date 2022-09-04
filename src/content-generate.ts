@@ -37,11 +37,11 @@ export class ContentGenerate {
     param: string,
     returnType: string | string[],
     _function: string
-  ) => `
-${description}${param ? `${param}` : ""}${
-    returnType !== "void" ? (typeof returnType === "object" ? this.createMultipleReturnTypes(returnType) : `\n---@return ${returnType}`) : ""
-  }
+  ) => `${description}${param || ""}${
+      returnType !== "void" ? (typeof returnType === "object" ? this.createMultipleReturnTypes(returnType) : `\n---@return ${returnType}`) : ""
+    }
 ${_function}
+
 `;
 
 /**
