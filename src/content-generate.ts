@@ -38,8 +38,12 @@ export class ContentGenerate {
     returnType: string | string[],
     _function: string
   ) => `${description}${param || ""}${
-      returnType !== "void" ? (typeof returnType === "object" ? this.createMultipleReturnTypes(returnType) : `\n---@return ${returnType}`) : ""
-    }
+    returnType !== "void"
+      ? typeof returnType === "object"
+        ? this.createMultipleReturnTypes(returnType)
+        : `\n---@return ${returnType}`
+      : ""
+  }
 ${_function}
 
 `;
@@ -54,7 +58,8 @@ ${_function}
 
     for (let i = 0; i < types.length; i++) {
       if (types[i] === "void") continue;
-      returnTypes += `\n---@return ${types[i]}`;
+      returnTypes +=
+        returnTypes === "" ? `\n---@return ${types[i]}` : `, ${types[i]}`;
     }
 
     return returnTypes;
@@ -75,7 +80,9 @@ ${_function}
     this.filesBuilder = filesBuilder;
   }
 
-  private static ConvertNativeType(nativeType: string | string[]): string | string[] {
+  private static ConvertNativeType(
+    nativeType: string | string[]
+  ): string | string[] {
     if (typeof nativeType === "object") {
       let newTypes: string[] = [];
       for (let i = 0; i < nativeType.length; i++) {
@@ -84,7 +91,7 @@ ${_function}
           case "vector3":
           case "string":
           case "void":
-            newTypes.push(type)
+            newTypes.push(type);
             break;
 
           case "char":
@@ -104,6 +111,7 @@ ${_function}
           case "fireid":
           case "blip":
           case "pickup":
+          case "hash":
             newTypes.push("number");
             break;
           case "bool":
@@ -114,9 +122,6 @@ ${_function}
             break;
           case "func":
             newTypes.push("function");
-            break;
-          case "hash":
-            newTypes.push("number | string");
             break;
 
           default:
@@ -158,13 +163,13 @@ ${_function}
         case "func":
           return "function";
         case "hash":
-          return "number | string"
+          return "number | string";
 
         default:
           return "any";
       }
     }
-  };
+  }
 
   /**
    * Replace LUA Method to string for fix generating issue
@@ -227,9 +232,7 @@ ${_function}
           params: string;
         } = this.nativeParams(jsonNative);
 
-        const functionTemplate = `function ${nativeName}(${
-          nativeParams.params
-        }) end`;
+        const functionTemplate = `function ${nativeName}(${nativeParams.params}) end`;
 
         this.generateDocs = this.template(
           this.nativeDescription(jsonNative),
@@ -250,7 +253,8 @@ ${_function}
   /**
    * Array containing all natives that have pointers that aren't a return type
    */
-  private nonReturnPointerNatives: string[] = [ // I didn't know what else to name it
+  private nonReturnPointerNatives: string[] = [
+    // I didn't know what else to name it
     // Entity*
     "DELETE_ENTITY",
     "SET_ENTITY_AS_NO_LONGER_NEEDED",
@@ -270,7 +274,7 @@ ${_function}
     "SET_PLAYER_WANTED_CENTRE_POSITION",
     "_START_SHAPE_TEST_SURROUNDING_COORDS",
     // Blip*
-    "REMOVE_BLIP"
+    "REMOVE_BLIP",
   ];
 
   /**
@@ -280,7 +284,7 @@ ${_function}
    */
   private isNonReturnPointerNative = (name: string): boolean => {
     return this.nonReturnPointerNatives.includes(name);
-  }
+  };
 
   /**
    * Seperate the Object and object types used in different ways
@@ -288,7 +292,13 @@ ${_function}
    * @returns string
    */
   private seperateObjectTypes = (type: string): string => {
-    return type === "Object" ? "object_1" : type === "Object*" ? "object_1*" : type === "object" ? "object_2" : type;
+    return type === "Object"
+      ? "object_1"
+      : type === "Object*"
+      ? "object_1*"
+      : type === "object"
+      ? "object_2"
+      : type;
   };
 
   /**
@@ -296,7 +306,9 @@ ${_function}
    * @param data Data of the native to convert the params from
    * @returns Array<string[], NativeParam[]>
    */
-  private convertOutParams = (data: NativeDefinition): [string[], NativeParam[]] => {
+  private convertOutParams = (
+    data: NativeDefinition
+  ): [string[], NativeParam[]] => {
     const params: NativeParam[] = data.params;
     const returnType: string = data.results;
     const newReturnTypes: string[] = [returnType];
@@ -306,14 +318,15 @@ ${_function}
 
       if (!type.includes("*")) continue;
 
-      if (returnType == "void" && newReturnTypes[0] === returnType) newReturnTypes.shift();
+      if (returnType == "void" && newReturnTypes[0] === returnType)
+        newReturnTypes.shift();
 
       type = type.substring(0, type.length - 1);
 
       if (this.isNonReturnPointerNative(data.name) || type === "char") {
         params[i].type = type;
         continue;
-      };
+      }
 
       newReturnTypes.push(type);
     }
@@ -367,7 +380,8 @@ ${_function}
       );
 
       luaDocs += `\n---@param ${nativeParam.name} ${convNativeType}`;
-      params += (paramPos != 0 ? ", " : "") + this.fieldToReplace(nativeParam.name);
+      params +=
+        (paramPos != 0 ? ", " : "") + this.fieldToReplace(nativeParam.name);
       paramPos++;
     }
 
