@@ -95,6 +95,7 @@ ${_function}
             break;
 
           case "char":
+          case "char*":
             newTypes.push("string");
             break;
           case "ped":
@@ -117,7 +118,7 @@ ${_function}
           case "bool":
             newTypes.push("boolean");
             break;
-          case "object_2":
+          case "object":
             newTypes.push("table");
             break;
           case "func":
@@ -158,7 +159,7 @@ ${_function}
           return "number";
         case "bool":
           return "boolean";
-        case "object_2":
+        case "object":
           return "table";
         case "func":
           return "function";
@@ -296,8 +297,6 @@ ${_function}
       ? "object_1"
       : type === "Object*"
       ? "object_1*"
-      : type === "object"
-      ? "object_2"
       : type;
   };
 
