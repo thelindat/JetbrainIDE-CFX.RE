@@ -87,6 +87,7 @@ ${_function}
       let newTypes: string[] = [];
       for (let i = 0; i < nativeType.length; i++) {
         const type: string = nativeType[i].toLowerCase();
+
         switch (type) {
           case "vector3":
           case "string":
@@ -98,6 +99,7 @@ ${_function}
           case "char*":
             newTypes.push("string");
             break;
+
           case "ped":
           case "vehicle":
           case "entity":
@@ -115,12 +117,15 @@ ${_function}
           case "hash":
             newTypes.push("number");
             break;
+
           case "bool":
             newTypes.push("boolean");
             break;
+
           case "object":
             newTypes.push("table");
             break;
+
           case "func":
             newTypes.push("function");
             break;
@@ -141,7 +146,9 @@ ${_function}
           return nativeType;
 
         case "char":
+        case "char*":
           return "string";
+
         case "ped":
         case "vehicle":
         case "entity":
@@ -156,15 +163,17 @@ ${_function}
         case "fireid":
         case "blip":
         case "pickup":
+        case "hash":
           return "number";
+
         case "bool":
           return "boolean";
+
         case "object":
           return "table";
+
         case "func":
           return "function";
-        case "hash":
-          return "number | string";
 
         default:
           return "any";
@@ -177,7 +186,7 @@ ${_function}
    *
    * @param field
    */
-  private fieldToReplace = (field): string => {
+  private fieldToReplace = (field: string): string => {
     if (field === "end") return "end_";
     else if (field === "repeat") return "_repeat";
     else return field;
@@ -202,7 +211,7 @@ ${_function}
     };
 
     for (const category in data)
-      for (const natives in data[category]) {
+      for (const _ in data[category]) {
         stats.native.total++;
       }
 
@@ -293,10 +302,8 @@ ${_function}
    * @returns string
    */
   private seperateObjectTypes = (type: string): string => {
-    return type === "Object"
-      ? "object_1"
-      : type === "Object*"
-      ? "object_1*"
+    return type.includes("Object")
+      ? type.replace("Object", "object_1")
       : type;
   };
 
@@ -309,15 +316,16 @@ ${_function}
     data: NativeDefinition
   ): [string[], NativeParam[]] => {
     const params: NativeParam[] = data.params;
-    const returnType: string = data.results;
+    const returnType: string = this.seperateObjectTypes(data.results);
     const newReturnTypes: string[] = [returnType];
 
     for (let i = 0; i < params.length; i++) {
       let type: string = this.seperateObjectTypes(params[i].type).toLowerCase();
+      params[i].type = type;
 
       if (!type.includes("*")) continue;
 
-      if (returnType == "void" && newReturnTypes[0] === returnType)
+      if (returnType === "void" && newReturnTypes[0] === returnType)
         newReturnTypes.shift();
 
       type = type.substring(0, type.length - 1);
