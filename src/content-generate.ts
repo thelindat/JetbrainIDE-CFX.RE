@@ -175,7 +175,7 @@ ${_function}
           return "function";
 
         case "hash":
-          return "number | string" // natives that accept Hash will call GetHashKey; this is also needed when using backticks
+          return "number | string"; // natives that accept Hash will call GetHashKey; this is also needed when using backticks
 
         default:
           return "any";
@@ -189,9 +189,16 @@ ${_function}
    * @param field
    */
   private fieldToReplace = (field: string): string => {
-    if (field === "end") return "end_";
-    else if (field === "repeat") return "_repeat";
-    else return field;
+    switch (field) {
+      case "end":
+        return "_end";
+
+      case "repeat":
+        return "_repeat";
+
+      default:
+        return field;
+    }
   };
 
   /**
@@ -386,7 +393,9 @@ ${_function}
         nativeParam.type
       );
 
-      luaDocs += `\n---@param ${nativeParam.name} ${convNativeType}`;
+      luaDocs += `\n---@param ${this.fieldToReplace(
+        nativeParam.name
+      )} ${convNativeType}`;
       params +=
         (paramPos != 0 ? ", " : "") + this.fieldToReplace(nativeParam.name);
       paramPos++;
