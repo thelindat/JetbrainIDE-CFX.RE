@@ -163,7 +163,6 @@ ${_function}
         case "fireid":
         case "blip":
         case "pickup":
-        case "hash":
           return "number";
 
         case "bool":
@@ -174,6 +173,9 @@ ${_function}
 
         case "func":
           return "function";
+
+        case "hash":
+          return "number | string" // natives that accept Hash will call GetHashKey; this is also needed when using backticks
 
         default:
           return "any";
@@ -302,9 +304,7 @@ ${_function}
    * @returns string
    */
   private seperateObjectTypes = (type: string): string => {
-    return type.includes("Object")
-      ? type.replace("Object", "object_1")
-      : type;
+    return type.includes("Object") ? type.replace("Object", "object_1") : type;
   };
 
   /**
