@@ -272,8 +272,8 @@ ${_function}
   /**
    * Array containing all natives that have pointers that aren't a return type
    */
+  // I didn't know what else to name it
   private nonReturnPointerNatives: string[] = [
-    // I didn't know what else to name it
     // Entity*
     "DELETE_ENTITY",
     "SET_ENTITY_AS_NO_LONGER_NEEDED",
@@ -294,6 +294,9 @@ ${_function}
     "_START_SHAPE_TEST_SURROUNDING_COORDS",
     // Blip*
     "REMOVE_BLIP",
+    //int*
+    "SET_BIT",
+    "CLEAR_BIT",
   ];
 
   /**
