@@ -40,15 +40,18 @@ export class FilesBuilder {
    * @return void
    */
   public category = (data: JSON): void => {
-    for (let category in data)
+    for (let category in data) {
+      const filepath = `${this.directory}/${category.toString()}.lua`;
       filesystem
-        .ensureFile(this.directory + "/" + category.toString() + ".lua")
+        .ensureFile(filepath)
         .then(() => {
+          filesystem.appendFile(filepath, "---@meta\n\n");
           console.info("Create file successfully : " + category.toString());
         })
         .catch((error) => {
           console.error(error);
         });
+    }
   };
 
   /**
@@ -67,14 +70,10 @@ export class FilesBuilder {
     data: String,
     nativeName: String
   ): void => {
-    filesystem.appendFile(
-      this.directory + "/" + files + ".lua",
-      data,
-      (error) => {
-        if (error) console.error("can't update file" + files);
+    filesystem.appendFile(`${this.directory}/${files}.lua`, data, (error) => {
+      if (error) console.error("can't update file" + files);
 
-        Main.onFileUpdate(stats, files, nativeName);
-      }
-    );
+      Main.onFileUpdate(stats, files, nativeName);
+    });
   };
 }
