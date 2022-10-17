@@ -419,11 +419,11 @@ ${_function}
     hash,
   }: NativeDefinition): string => {
     let baseDesc = description
-      ? description.replace(/^/gm, "--- ")
-      : "--- This native does not have an official description.";
+      ? description.replace(/^/gm, "---")
+      : "---This native does not have an official description.";
 
     // Attach natives url;
-    baseDesc += `\n--- [Native Documentation](https://docs.fivem.net/natives/?_${hash})`;
+    baseDesc += `\n---[Native Documentation](https://docs.fivem.net/natives/?_${hash})`;
 
     return baseDesc;
   };
