@@ -86,7 +86,7 @@ ${_function}
     if (typeof nativeType === "object") {
       let newTypes: string[] = [];
       for (let i = 0; i < nativeType.length; i++) {
-        const type: string = nativeType[i].toLowerCase();
+        const type: string = nativeType[i] ? nativeType[i].toLowerCase() : "void";
 
         switch (type) {
           case "vector3":
@@ -326,7 +326,7 @@ ${_function}
     data: NativeDefinition
   ): [string[], NativeParam[]] => {
     const params: NativeParam[] = data.params;
-    const returnType: string = this.seperateObjectTypes(data.results);
+    const returnType: string | false = data.results ? this.seperateObjectTypes(data.results) : "void";
     const newReturnTypes: string[] = [returnType];
 
     for (let i = 0; i < params.length; i++) {
