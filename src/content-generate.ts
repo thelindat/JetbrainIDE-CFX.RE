@@ -184,14 +184,16 @@ ${_function}
   }
 
   /**
-   * Replace LUA Method to string for fix generating issue
+   * Replace Lua keywords when used as function arguments
    *
    * @param field
    */
   private fieldToReplace = (field: string): string => {
     switch (field) {
       case "end":
-        return "_end";
+      case "repeat":
+      case "local":
+        return `_${field}`;
 
       case "repeat":
         return "_repeat";
