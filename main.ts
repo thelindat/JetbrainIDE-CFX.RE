@@ -24,6 +24,19 @@ export class Main {
         return "https://runtime.fivem.net/doc/natives.json";
     }
   };
+
+  /**
+   * @param gametype
+   */
+  private static getNativeDocsUrl = (gametype: GamesType): string => {
+    switch (gametype) {
+      case GamesType.RDR3:
+        return "https://alloc8or.re/rdr3/nativedb/?n=";
+      default:
+        return "https://docs.fivem.net/natives/?_";
+    }
+  };
+
   /**
    * Startup logicNom de la native fivem
    *
