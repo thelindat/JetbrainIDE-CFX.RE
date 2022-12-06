@@ -238,6 +238,9 @@ ${_function}
          */
         const jsonNative: NativeDefinition = data[category][native];
 
+        if ("comment" in jsonNative)
+          jsonNative["description"] = jsonNative["comment"];
+
         /**
          * Generation of the native name
          */
