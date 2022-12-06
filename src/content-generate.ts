@@ -23,6 +23,11 @@ export class ContentGenerate {
   private generateDocs: string = "";
 
   /**
+   * Documentation url to append to each native description
+   */
+  private documentationUrl: string = "https://docs.fivem.net/natives/?_";
+
+  /**
    * Template to generate documentation and shortcuts for native speakers
    *
    * @param description
@@ -272,6 +277,16 @@ ${_function}
   };
 
   /**
+   * Set the documentation url to append to each native description
+   * @param url 
+   * @returns this
+   */
+  public setDocumentationUrl(url: string) {
+    this.documentationUrl = url;
+    return this;
+  }
+
+  /**
    * Array containing all natives that have pointers that aren't a return type
    */
   // I didn't know what else to name it
@@ -425,7 +440,7 @@ ${_function}
       : "---This native does not have an official description.";
 
     // Attach natives url;
-    baseDesc += `\n---[Native Documentation](https://docs.fivem.net/natives/?_${hash})`;
+    baseDesc += `\n---[Native Documentation](${this.documentationUrl}${hash})`;
 
     return baseDesc;
   };
