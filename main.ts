@@ -58,7 +58,8 @@ export class Main {
         files.init().then(async () => {
           files.category(json);
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          const builder = new ContentGenerate(files);
+          const builder = new ContentGenerate(files)
+            .setDocumentationUrl(Main.getNativeDocsUrl(gametype));
           builder.generateTemplate(json);
         });
       });
