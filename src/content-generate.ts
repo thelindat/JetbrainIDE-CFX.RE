@@ -299,6 +299,7 @@ ${_function}
     //int*
     "SET_BIT",
     "CLEAR_BIT",
+    "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED"
   ];
 
   /**
