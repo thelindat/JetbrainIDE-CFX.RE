@@ -261,7 +261,7 @@ ${_function}
         const functionTemplate = `function ${nativeName}(${nativeParams.params}) end`;
 
         this.generateDocs = this.template(
-          this.nativeDescription(jsonNative),
+          this.nativeDescription(jsonNative.description, native),
           nativeParams.luaDocs,
           ContentGenerate.ConvertNativeType(newReturnTypes),
           functionTemplate
@@ -431,10 +431,7 @@ ${_function}
    *
    * @return String Returns the description of the native or a prefect text indicating the lack of official description
    */
-  private nativeDescription = ({
-    description,
-    hash,
-  }: NativeDefinition): string => {
+  private nativeDescription = (description: string, hash: string): string => {
     let baseDesc = description
       ? description.replace(/^/gm, "---")
       : "---This native does not have an official description.";
