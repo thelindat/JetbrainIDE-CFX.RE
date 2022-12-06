@@ -360,7 +360,10 @@ ${_function}
 
       type = type.substring(0, type.length - 1);
 
-      if (this.isNonReturnPointerNative(data.name) || type === "char") {
+      if (type.startsWith("const "))
+        type = type.substring("const ".length);
+
+      if (this.isNonReturnPointerNative(data.name) || type.substring(-4) === "char") {
         params[i].type = type;
         continue;
       }
