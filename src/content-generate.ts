@@ -241,6 +241,9 @@ ${_function}
         if ("comment" in jsonNative)
           jsonNative["description"] = jsonNative["comment"];
 
+        if ("return_type" in jsonNative)
+          jsonNative["results"] = jsonNative["return_type"];
+
         /**
          * Generation of the native name
          */
