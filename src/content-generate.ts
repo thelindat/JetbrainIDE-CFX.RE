@@ -23,6 +23,11 @@ export class ContentGenerate {
   private generateDocs: string = "";
 
   /**
+   * Documentation url to append to each native description
+   */
+  private documentationUrl: string = "https://docs.fivem.net/natives/?_";
+
+  /**
    * Template to generate documentation and shortcuts for native speakers
    *
    * @param description
@@ -233,6 +238,12 @@ ${_function}
          */
         const jsonNative: NativeDefinition = data[category][native];
 
+        if ("comment" in jsonNative)
+          jsonNative["description"] = jsonNative["comment"];
+
+        if ("return_type" in jsonNative)
+          jsonNative["results"] = jsonNative["return_type"];
+
         /**
          * Generation of the native name
          */
@@ -256,7 +267,7 @@ ${_function}
         const functionTemplate = `function ${nativeName}(${nativeParams.params}) end`;
 
         this.generateDocs = this.template(
-          this.nativeDescription(jsonNative),
+          this.nativeDescription(jsonNative.description, native),
           nativeParams.luaDocs,
           ContentGenerate.ConvertNativeType(newReturnTypes),
           functionTemplate
@@ -270,6 +281,16 @@ ${_function}
         );
       }
   };
+
+  /**
+   * Set the documentation url to append to each native description
+   * @param url 
+   * @returns this
+   */
+  public setDocumentationUrl(url: string) {
+    this.documentationUrl = url;
+    return this;
+  }
 
   /**
    * Array containing all natives that have pointers that aren't a return type
@@ -343,7 +364,10 @@ ${_function}
 
       type = type.substring(0, type.length - 1);
 
-      if (this.isNonReturnPointerNative(data.name) || type === "char") {
+      if (type.startsWith("const "))
+        type = type.substring("const ".length);
+
+      if (this.isNonReturnPointerNative(data.name) || type.substring(-4) === "char") {
         params[i].type = type;
         continue;
       }
@@ -417,16 +441,13 @@ ${_function}
    *
    * @return String Returns the description of the native or a prefect text indicating the lack of official description
    */
-  private nativeDescription = ({
-    description,
-    hash,
-  }: NativeDefinition): string => {
+  private nativeDescription = (description: string, hash: string): string => {
     let baseDesc = description
       ? description.replace(/^/gm, "---")
       : "---This native does not have an official description.";
 
     // Attach natives url;
-    baseDesc += `\n---[Native Documentation](https://docs.fivem.net/natives/?_${hash})`;
+    baseDesc += `\n---[Native Documentation](${this.documentationUrl}${hash})`;
 
     return baseDesc;
   };
