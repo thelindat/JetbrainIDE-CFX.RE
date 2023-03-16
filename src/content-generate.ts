@@ -1,6 +1,7 @@
 import { FilesBuilder } from "./files-builder";
 import { stripIndents } from "common-tags";
 import { NativeDefinition, NativeParam } from "./types";
+import { terminal as term } from "terminal-kit";
 
 interface TemplateObject {
   desc: string;
@@ -91,7 +92,9 @@ ${_function}
     if (typeof nativeType === "object") {
       let newTypes: string[] = [];
       for (let i = 0; i < nativeType.length; i++) {
-        const type: string = nativeType[i] ? nativeType[i].toLowerCase() : "void";
+        const type: string = nativeType[i]
+          ? nativeType[i].toLowerCase()
+          : "void";
 
         switch (type) {
           case "vector3":
@@ -215,46 +218,35 @@ ${_function}
    *
    * @return void
    */
-  public generateTemplate = (data: JSON): void => {
-    /**
-     * Current count native build
-     */
-    let stats = {
-      native: {
-        total: 0,
-        current: 0,
-      },
-    };
+  public generateTemplate = async (data: JSON): Promise<string | void> => {
+    let nativeTotal = 0;
 
-    for (const category in data)
-      for (const _ in data[category]) {
-        stats.native.total++;
-      }
+    for await (const [category, natives] of Object.entries(data)) {
+      let nativeCategory = 0;
+      let output = {};
 
-    for (const category in data)
-      for (const native in data[category]) {
-        /**
-         * Shortcut of data[category][natives]
-         */
-        const jsonNative: NativeDefinition = data[category][native];
+      for (const [hash, native] of Object.entries(natives) as [
+        string,
+        NativeDefinition
+      ][]) {
+        nativeTotal++;
+        nativeCategory++;
 
-        if ("comment" in jsonNative)
-          jsonNative["description"] = jsonNative["comment"];
+        if ("comment" in native) native.description = native.comment;
 
-        if ("return_type" in jsonNative)
-          jsonNative["results"] = jsonNative["return_type"];
+        if ("return_type" in native) native.results = native.return_type;
 
         /**
          * Generation of the native name
          */
-        const nativeName: string = this.nativeName(jsonNative, native);
+        const nativeName: string = this.nativeName(native, hash);
 
         /**
          * Convert pointers to the return types and remove the pointer symbol
          */
-        const [newReturnTypes, newParams] = this.convertOutParams(jsonNative);
+        const [newReturnTypes, newParams] = this.convertOutParams(native);
 
-        jsonNative.params = newParams;
+        native.params = newParams;
 
         /**
          * Returns parameters in different formats
@@ -262,29 +254,43 @@ ${_function}
         const nativeParams: {
           luaDocs: string;
           params: string;
-        } = this.nativeParams(jsonNative);
+        } = this.nativeParams(native);
 
         const functionTemplate = `function ${nativeName}(${nativeParams.params}) end`;
 
-        this.generateDocs = this.template(
-          this.nativeDescription(jsonNative.description, native),
+        output[nativeName] = this.template(
+          this.nativeDescription(native.description, hash),
           nativeParams.luaDocs,
           ContentGenerate.ConvertNativeType(newReturnTypes),
           functionTemplate
         );
-
-        this.filesBuilder.update(
-          stats,
-          category,
-          this.generateDocs,
-          nativeName
-        );
       }
+
+      let outputStr = "";
+      const orderedKeys = Object.keys(output).sort((a, b) =>
+        a.localeCompare(b)
+      );
+
+      for (const i in orderedKeys) {
+        outputStr += output[orderedKeys[i]];
+      }
+
+      await this.filesBuilder
+        .update(category, outputStr)
+        .then(() => {
+          term.green(
+            `Generated ${nativeCategory} native declarations for ${category}\n`
+          );
+        })
+        .catch(term.red);
+    }
+
+    term.green(`Generated ${nativeTotal} native declarations\n`);
   };
 
   /**
    * Set the documentation url to append to each native description
-   * @param url 
+   * @param url
    * @returns this
    */
   public setDocumentationUrl(url: string) {
@@ -320,7 +326,7 @@ ${_function}
     //int*
     "SET_BIT",
     "CLEAR_BIT",
-    "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED"
+    "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED",
   ];
 
   /**
@@ -350,7 +356,9 @@ ${_function}
     data: NativeDefinition
   ): [string[], NativeParam[]] => {
     const params: NativeParam[] = data.params;
-    const returnType: string | false = data.results ? this.seperateObjectTypes(data.results) : "void";
+    const returnType: string | false = data.results
+      ? this.seperateObjectTypes(data.results)
+      : "void";
     const newReturnTypes: string[] = [returnType];
 
     for (let i = 0; i < params.length; i++) {
@@ -364,10 +372,12 @@ ${_function}
 
       type = type.substring(0, type.length - 1);
 
-      if (type.startsWith("const "))
-        type = type.substring("const ".length);
+      if (type.startsWith("const ")) type = type.substring("const ".length);
 
-      if (this.isNonReturnPointerNative(data.name) || type.substring(-4) === "char") {
+      if (
+        this.isNonReturnPointerNative(data.name) ||
+        type.substring(-4) === "char"
+      ) {
         params[i].type = type;
         continue;
       }

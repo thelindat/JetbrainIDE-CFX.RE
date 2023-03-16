@@ -47,25 +47,34 @@ export class Main {
    */
   public static onEnable = (dir: string, gametype: GamesType): void => {
     let json = Main.getNativeLink(gametype);
-    if (json !== undefined) {
-      figlet("JetBrainIDE-CitizenFX", (err, data) => {
-        term.blue(data);
-        term.red("\n Dylan Malandain - @iTexZoz \n");
+
+    if (!json) return process.exit();
+
+    figlet("JetBrainIDE-CitizenFX", (err, data) => {
+      term.blue(data);
+      term.red("\n Dylan Malandain - @iTexZoz \n");
+    });
+
+    request.get(json, (error, response, content) => {
+      const files = new FilesBuilder(dir);
+      const json = JSON.parse(content);
+
+      files.init().then(async () => {
+        files.category(json);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const builder = new ContentGenerate(files).setDocumentationUrl(
+          Main.getNativeDocsUrl(gametype)
+        );
+
+        try {
+          await builder.generateTemplate(json);
+        } catch (err) {
+          term.red(err);
+        } finally {
+          process.exit();
+        }
       });
-      request.get(json, (error, response, content) => {
-        const files = new FilesBuilder(dir);
-        const json = JSON.parse(content);
-        files.init().then(async () => {
-          files.category(json);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          const builder = new ContentGenerate(files)
-            .setDocumentationUrl(Main.getNativeDocsUrl(gametype));
-          builder.generateTemplate(json);
-        });
-      });
-    } else {
-      process.exit();
-    }
+    });
   };
 
   /**

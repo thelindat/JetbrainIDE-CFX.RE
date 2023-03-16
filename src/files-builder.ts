@@ -62,18 +62,19 @@ export class FilesBuilder {
    * @param data Data to be inserted in the file
    * @param nativeName Name of the native FiveM
    *
-   * @return void
+   * @return Promise<void | string>
    */
   public update = (
-    stats: { native: { total: number; current: number } },
     files: String,
     data: String,
-    nativeName: String
-  ): void => {
-    filesystem.appendFile(`${this.directory}/${files}.lua`, data, (error) => {
-      if (error) console.error("can't update file" + files);
+  ): Promise<void | string> => {
+    return new Promise((resolve, reject) => {
+      const fileName = `${this.directory}/${files}.lua`;
 
-      Main.onFileUpdate(stats, files, nativeName);
+      filesystem.appendFile(fileName, data, (error) => {
+        if (error) return reject(`can't update file ${files}\n${error}`);
+        resolve();
+      });
     });
   };
 }

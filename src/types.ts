@@ -13,4 +13,6 @@ export interface NativeDefinition {
   ns: string
   jhash: string
   manualHash: boolean
+  return_type?: string
+  comment?: string
 }
