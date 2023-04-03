@@ -327,6 +327,8 @@ ${_function}
     "SET_BIT",
     "CLEAR_BIT",
     "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED",
+    "DELETE_ROPE",
+    "DOES_ROPE_EXIST",
   ];
 
   /**
