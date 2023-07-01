@@ -15,4 +15,5 @@ export interface NativeDefinition {
   manualHash: boolean
   return_type?: string
   comment?: string
+  apiset?: string
 }

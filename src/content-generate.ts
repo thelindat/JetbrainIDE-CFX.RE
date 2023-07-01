@@ -221,8 +221,8 @@ ${_function}
   public generateTemplate = async (data: JSON): Promise<string | void> => {
     let nativeTotal = 0;
 
-    for await (const [category, natives] of Object.entries(data)) {
-      let nativeCategory = 0;
+    for await (const [namespace, natives] of Object.entries(data)) {
+      let namespaceTotal = 0;
       let output = {};
 
       for (const [hash, native] of Object.entries(natives) as [
@@ -230,7 +230,7 @@ ${_function}
         NativeDefinition
       ][]) {
         nativeTotal++;
-        nativeCategory++;
+        namespaceTotal++;
 
         if ("comment" in native) native.description = native.comment;
 
@@ -259,7 +259,12 @@ ${_function}
         const functionTemplate = `function ${nativeName}(${nativeParams.params}) end`;
 
         output[nativeName] = this.template(
-          this.nativeDescription(native.description, hash),
+          this.nativeDescription(
+            native.description,
+            hash,
+            namespace,
+            native.apiset
+          ),
           nativeParams.luaDocs,
           ContentGenerate.ConvertNativeType(newReturnTypes),
           functionTemplate
@@ -276,10 +281,10 @@ ${_function}
       }
 
       await this.filesBuilder
-        .update(category, outputStr)
+        .update(namespace, outputStr)
         .then(() => {
           term.green(
-            `Generated ${nativeCategory} native declarations for ${category}\n`
+            `Generated ${namespaceTotal} native declarations for ${namespace}\n`
           );
         })
         .catch(term.red);
@@ -453,15 +458,18 @@ ${_function}
    *
    * @return String Returns the description of the native or a prefect text indicating the lack of official description
    */
-  private nativeDescription = (description: string, hash: string): string => {
+  private nativeDescription = (
+    description: string,
+    hash: string,
+    namespace: string,
+    apiset: string = "client"
+  ): string => {
     let baseDesc = description
       ? description.replace(/^/gm, "---")
       : "---This native does not have an official description.";
 
     // Attach natives url;
-    baseDesc += `\n---[Native Documentation](${this.documentationUrl}${hash})`;
-
-    return baseDesc;
+    return `---**\`${namespace}\` \`${apiset}\`**  \n---[Native Documentation](${this.documentationUrl}${hash})  \n${baseDesc}`;
   };
 
   /**
