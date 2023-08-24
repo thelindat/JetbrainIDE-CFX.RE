@@ -16,4 +16,6 @@ export interface NativeDefinition {
   return_type?: string
   comment?: string
   apiset?: string
+  aliases?: string[]
+  old_names?: string[]
 }

@@ -42,7 +42,8 @@ export class ContentGenerate {
     description: string,
     param: string,
     returnType: string | string[],
-    _function: string
+    _function: string,
+    aliases?: string
   ) => `${description}${param || ""}${
     returnType !== "void"
       ? typeof returnType === "object"
@@ -52,7 +53,7 @@ export class ContentGenerate {
   }
 ${_function}
 
-`;
+${aliases ? `${aliases}\n` : ""}`;
 
   /**
    * Convert string array of return types to a single string with luadocs return types
@@ -242,6 +243,14 @@ ${_function}
         const nativeName: string = this.nativeName(native, hash);
 
         /**
+         * Generation deprecated aliases of the native
+         */
+        const aliases = this.getAliases(
+          nativeName,
+          native.aliases || native.old_names
+        );
+
+        /**
          * Convert pointers to the return types and remove the pointer symbol
          */
         const [newReturnTypes, newParams] = this.convertOutParams(native);
@@ -267,7 +276,8 @@ ${_function}
           ),
           nativeParams.luaDocs,
           ContentGenerate.ConvertNativeType(newReturnTypes),
-          functionTemplate
+          functionTemplate,
+          aliases
         );
       }
 
@@ -410,6 +420,29 @@ ${_function}
         .replace("0x", "n_0x")
         .replace(/_([a-z])/g, (_, bit: string) => bit.toUpperCase())
         .replace(/^([a-z])/, (_, bit: string) => bit.toUpperCase());
+  };
+
+  private getAliases = (
+    nativeName: string,
+    aliases?: string[]
+  ): string | undefined => {
+    if (!aliases) return;
+
+    return aliases
+      .map((alias) => {
+        if (alias[0] === "0") return "";
+
+        alias = alias
+          .toLowerCase()
+          .replace("0x", "n_0x")
+          .replace(/_([a-z])/g, (_, bit: string) => bit.toUpperCase())
+          .replace(/^([a-z])/, (_, bit: string) => bit.toUpperCase());
+
+        return alias === nativeName
+          ? ""
+          : `---@deprecated\n${nativeName} = ${alias}\n`;
+      })
+      .join("");
   };
 
   /**
