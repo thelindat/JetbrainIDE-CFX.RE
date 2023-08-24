@@ -440,7 +440,7 @@ ${aliases ? `${aliases}\n` : ""}`;
 
         return alias === nativeName
           ? ""
-          : `---@deprecated\n${nativeName} = ${alias}\n`;
+          : `---@deprecated\n${alias} = ${nativeName}\n`;
       })
       .join("");
   };
