@@ -45,23 +45,25 @@ export class Main {
    * @param gametype
    * @return void
    */
-  public static onEnable = (dir: string, gametype: GamesType): void => {
+  public static onEnable = (
+    dir: string,
+    gametype: GamesType
+  ): Promise<void> => {
     let json = Main.getNativeLink(gametype);
 
-    if (!json) return process.exit();
+    if (!json) return;
+  
+    return new Promise((resolve) => {
+      request.get(json, async (error, response, content) => {
+        const files = new FilesBuilder(dir);
+        const json = JSON.parse(content);
 
-    figlet("JetBrainIDE-CitizenFX", (err, data) => {
-      term.blue(data);
-      term.red("\n Dylan Malandain - @iTexZoz \n");
-    });
+        await files.init();
 
-    request.get(json, (error, response, content) => {
-      const files = new FilesBuilder(dir);
-      const json = JSON.parse(content);
-
-      files.init().then(async () => {
         files.category(json);
+
         await new Promise((resolve) => setTimeout(resolve, 1000));
+
         const builder = new ContentGenerate(files).setDocumentationUrl(
           Main.getNativeDocsUrl(gametype)
         );
@@ -71,7 +73,7 @@ export class Main {
         } catch (err) {
           term.red(err);
         } finally {
-          process.exit();
+          resolve();
         }
       });
     });
@@ -108,30 +110,26 @@ export class Main {
   };
 }
 
+figlet("JetBrainIDE-CitizenFX", (err, data) => {
+  term.blue(data);
+  term.red("\n Dylan Malandain - @iTexZoz \n");
+});
+
 term.cyan(
   "Welcome to the native completion generator tool for Jetbrain IDEs for cfx.re projects.\n"
 );
-term.cyan("Please select the game concerned.\n");
+// term.cyan("Please select the game concerned.\n");
 
-let items = [
-  "1. (FiveM) GTA V",
-  "2. (RedM) Red Dead Redemption 2",
-  "3. CFX (Is Available for RedM && FiveM)",
-];
+// let items = [
+//   "1. (FiveM) GTA V",
+//   "2. (RedM) Red Dead Redemption 2",
+//   "3. CFX (Is Available for RedM && FiveM)",
+// ];
 
-term.singleColumnMenu(items, function (error, response) {
-  switch (response.selectedIndex) {
-    case 0:
-      new Main.onEnable("build/cfx/GTAV", GamesType.GTA);
-      break;
-    case 1:
-      new Main.onEnable("build/cfx/RDR3", GamesType.RDR3);
-      break;
-    default:
-      new Main.onEnable("build/cfx/CFX-NATIVE", GamesType.Cfx);
-      break;
-  }
-  // process.exit();
-});
+(async () => {
+  await Main.onEnable("build/cfx/GTAV", GamesType.GTA);
+  await Main.onEnable("build/cfx/RDR3", GamesType.RDR3);
+  await Main.onEnable("build/cfx/CFX-NATIVE", GamesType.Cfx);
 
-// new Main.onEnable("build/cfx/GTAV", GamesType.GTA);
+  process.exit();
+})();
