@@ -344,6 +344,7 @@ ${aliases ? `${aliases}\n` : ""}`;
     "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED",
     "DELETE_ROPE",
     "DOES_ROPE_EXIST",
+    "CLEAR_SEQUENCE_TASK"
   ];
 
   /**
