@@ -46,19 +46,38 @@ export function GetNativeType(type: string, input = false) {
     case "float":
       return "number";
 
+    case "uint":
+    case "entity":
+    case "player":
+    case "decisionmaker":
+    case "fireid":
     case "ped":
     case "vehicle":
-    case "entity":
-    case "object_1":
-    case "long":
-    case "uint":
-    case "int":
-    case "player":
-    case "blip":
     case "cam":
-    case "fireid":
-    case "blip":
+    case "cargenerator":
+    case "group":
+    case "train":
     case "pickup":
+    case "object_1":
+    case "weapon":
+    case "interior":
+    case "blip":
+    case "texture":
+    case "texturedict":
+    case "coverpoint":
+    case "camera":
+    case "tasksequence":
+    case "sphere":
+    case "scrhandle":
+    case "int":
+    case "long":
+    case "itemset":
+    case "animscene":
+    case "perschar":
+    case "popzone":
+    case "prompt":
+    case "propset":
+    case "volume":
       return "integer";
 
     default:

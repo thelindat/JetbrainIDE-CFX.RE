@@ -87,15 +87,6 @@ ${aliases ? `${aliases}\n` : ""}`;
     this.filesBuilder = filesBuilder;
   }
 
-  private static ConvertNativeType(
-    nativeType: string | string[]
-  ): string | string[] {
-    if (typeof nativeType === "object")
-      return nativeType.map((type) => GetNativeType(type));
-
-    return GetNativeType(nativeType, true);
-  }
-
   /**
    * Replace Lua keywords when used as function arguments
    *
@@ -179,7 +170,7 @@ ${aliases ? `${aliases}\n` : ""}`;
             native.apiset
           ),
           nativeParams.luaDocs,
-          ContentGenerate.ConvertNativeType(newReturnTypes),
+          newReturnTypes.map((type) => GetNativeType(type)),
           functionTemplate,
           aliases
         );
@@ -374,9 +365,7 @@ ${aliases ? `${aliases}\n` : ""}`;
 
       if (nativeParam.type.includes("*")) continue;
 
-      const convNativeType = ContentGenerate.ConvertNativeType(
-        nativeParam.type
-      );
+      const convNativeType = GetNativeType(nativeParam.type, true);
 
       luaDocs += `\n---@param ${this.fieldToReplace(
         nativeParam.name
