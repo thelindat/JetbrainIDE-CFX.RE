@@ -1,6 +1,6 @@
 import { FilesBuilder } from "./files-builder";
 import { stripIndents } from "common-tags";
-import { NativeDefinition, NativeParam } from "./types";
+import { GetNativeType, NativeDefinition, NativeParam } from "./types";
 import { terminal as term } from "terminal-kit";
 
 interface TemplateObject {
@@ -90,106 +90,10 @@ ${aliases ? `${aliases}\n` : ""}`;
   private static ConvertNativeType(
     nativeType: string | string[]
   ): string | string[] {
-    if (typeof nativeType === "object") {
-      let newTypes: string[] = [];
-      for (let i = 0; i < nativeType.length; i++) {
-        const type: string = nativeType[i]
-          ? nativeType[i].toLowerCase()
-          : "void";
+    if (typeof nativeType === "object")
+      return nativeType.map((type) => GetNativeType(type));
 
-        switch (type) {
-          case "vector3":
-          case "string":
-          case "void":
-            newTypes.push(type);
-            break;
-
-          case "char":
-          case "char*":
-            newTypes.push("string");
-            break;
-
-          case "ped":
-          case "vehicle":
-          case "entity":
-          case "object_1":
-          case "float":
-          case "long":
-          case "uint":
-          case "int":
-          case "player":
-          case "blip":
-          case "cam":
-          case "fireid":
-          case "blip":
-          case "pickup":
-          case "hash":
-            newTypes.push("number");
-            break;
-
-          case "bool":
-            newTypes.push("boolean");
-            break;
-
-          case "object":
-            newTypes.push("table");
-            break;
-
-          case "func":
-            newTypes.push("function");
-            break;
-
-          default:
-            newTypes.push("any");
-            break;
-        }
-      }
-      return newTypes;
-    } else {
-      nativeType = nativeType.toLowerCase();
-
-      switch (nativeType) {
-        case "vector3":
-        case "string":
-        case "void":
-          return nativeType;
-
-        case "char":
-        case "char*":
-          return "string";
-
-        case "ped":
-        case "vehicle":
-        case "entity":
-        case "object_1":
-        case "float":
-        case "long":
-        case "uint":
-        case "int":
-        case "player":
-        case "blip":
-        case "cam":
-        case "fireid":
-        case "blip":
-        case "pickup":
-          return "number";
-
-        case "bool":
-          return "boolean";
-
-        case "object":
-          return "table";
-
-        case "func":
-          return "function";
-
-        case "hash":
-          return "number | string"; // natives that accept Hash will call GetHashKey; this is also needed when using backticks
-
-        default:
-          return "any";
-      }
-    }
+    return GetNativeType(nativeType, true);
   }
 
   /**
@@ -344,7 +248,7 @@ ${aliases ? `${aliases}\n` : ""}`;
     "SET_SCALEFORM_MOVIE_AS_NO_LONGER_NEEDED",
     "DELETE_ROPE",
     "DOES_ROPE_EXIST",
-    "CLEAR_SEQUENCE_TASK"
+    "CLEAR_SEQUENCE_TASK",
   ];
 
   /**
