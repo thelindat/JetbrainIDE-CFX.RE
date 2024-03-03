@@ -21,7 +21,9 @@ export interface NativeDefinition {
 }
 
 export function GetNativeType(type: string, input = false) {
-  switch (type.toLowerCase()) {
+  type = type.toLowerCase();
+
+  switch (type) {
     case "vector3":
     case "string":
     case "void":
